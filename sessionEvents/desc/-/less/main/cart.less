@@ -1,0 +1,68 @@
+.@{__nodeId__} {
+
+    table {
+        border-collapse: separate;
+        border-spacing: 1px;
+        background-color: #C5C5C5;
+
+        tr {
+
+            td {
+                padding: 3px;
+                font-size: 11px;
+                background-color: #FFFFFF;
+
+                &.price {
+                    text-align: right;
+                }
+
+                &.quantity {
+                    text-align: center;
+                }
+
+                &.cost {
+                    text-align: right;
+                }
+
+                &.total_cost {
+                    text-align: right;
+                }
+
+                &.total_cost_witch_discount {
+                    text-align: right;
+                }
+
+                &.total_cost_label {
+                    text-align: right;
+                    font-weight: bold;
+                }
+            }
+
+            &.added {
+
+                td {
+
+                    &.name {
+                        color: #1A981A;
+                        font-weight: bold;
+                    }
+                }
+            }
+
+            &.deleted {
+
+                td {
+
+                    &.name {
+                        color: #FF99A3;
+                        font-weight: bold;
+                    }
+
+                    &.cost {
+                        text-decoration: line-through;
+                    }
+                }
+            }
+        }
+    }
+}
