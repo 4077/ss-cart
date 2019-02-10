@@ -11,12 +11,10 @@ class Notify extends \Controller
 
         $subject = 'Перешел на страницу корзины';
 
-        /**
-         * @var $svc \ss\sessionsLog\ui\controllers\Svc
-         */
-        $svc = $this->c('\ss\sessionsLog\ui svc');
-
-        $avatarSrc = $svc->getAvatarSrc($sessionKey);
+        // todo сделать в sstm рендрилку аватарок отдельной {
+        $clientInfo = sstm()->clients->getClientInfo($sessionKey);
+        $avatarSrc = $clientInfo->getAvatarSrc($sessionKey);
+        // }
 
         if ($user) {
             $userType = 'Пользователь';
