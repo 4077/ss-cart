@@ -66,20 +66,18 @@ class Submit extends \Controller
     {
         $output = [];
 
-        $items = cart($this->_instance())->getItems();
+        $products = cart($this->_instance())->getProducts();
 
-        foreach ($items as $key => $item) {
-            if ($model = unpack_model($item['model'] ?? null)) {
-                $outputItem = $item;
+        foreach ($products as $productId => $productData) {
+            $outputItem = $productData;
 
+            if ($product = \ss\models\Product::find($productId)) {
                 aa($outputItem, [
-                    'model' => $item['model'],
-                    'name'  => $item['name'],
-                    'props' => _j($model->props)
+                    'props' => _j($product->props)
                 ]);
-
-                $output[] = $outputItem;
             }
+
+            $output[] = $outputItem;
         }
 
         return j_($output);
@@ -87,12 +85,15 @@ class Submit extends \Controller
 
     private function sendClientLetter($order)
     {
-        $clientInfo = cart($this->_instance())->s('client_info');
+        $cart = cart($this->_instance());
+
+        $clientInfo = $cart->s('client_info');
 
         if ($clientInfo['email']) {
-            $notifySettings = cart($this->_instance())->settings('notify');
+            $notifySettings = $cart->settings('notify');
+            $mailerHandlerPath = $cart->settings('mailer');
 
-            $mailer = mailer('tdui/mailer:');
+            $mailer = mailer($mailerHandlerPath);
 
             $mailer->AddAddress($clientInfo['email']);
 
@@ -105,12 +106,15 @@ class Submit extends \Controller
 
     private function sendOwnerLetter($order)
     {
-        $notifySettings = cart($this->_instance())->settings('notify');
+        $cart = cart($this->_instance());
 
-        $recipients = handlers()->render('tdui/mail-recipients:order-create');
+        $notifySettings = $cart->settings('notify');
+        $recipients = ap($notifySettings, 'recipients');
 
         foreach ($recipients as $recipient) {
-            $mailer = mailer('tdui/mailer:');
+            $mailerHandlerPath = $cart->settings('mailer');
+
+            $mailer = mailer($mailerHandlerPath);
 
             $mailer->AddAddress($recipient);
 
@@ -202,53 +206,44 @@ class Submit extends \Controller
 
         $cart = cart($this->_instance());
 
-        $noContainer = $cart->settings('ui/cart/no_container');
-
-        $items = $cart->getItems();
+        $products = $cart->getProducts();
 
         $hasOnceWithHiddenPrice = false;
 
         $totalCost = 0;
 
-        if (empty($noContainer)) { // костыль
-            /**
-             * @var $cTileApp \ss\components\products\ui\controllers\tile\App
-             */
-            $cTileApp = $this->c('\ss\components\products\ui tile/app');
-        }
+        foreach ($products as $productId => $productData) {
+            $product = \ss\models\Product::find($productId);
 
-        foreach ($items as $key => $item) {
-            $cost = $item['price'] * $item['quantity'];
+            $discount = $productData['discount'];
+            $price = $productData['price'];
 
-            $itemData = [
-                'price_display'     => true,
-                'sell_by_alt_units' => false
-            ];
+            $cost = $price * $productData['quantity'];
 
-            if ($product = unpack_model($item['model'] ?? null)) {
-                if (empty($noContainer)) { // костыль
-                    if ($container = $product->cat) {
-                        $pivot = ss()->cats->getFirstEnabledComponentPivot($container);
+            if ($productData['price_display']) {
+                $totalCost += $cost;
+            } else {
+                $hasOnceWithHiddenPrice = true;
+            }
 
-                        $tileData = $cTileApp->renderTileData($product, $pivot);
+            $v->assign('item', [
+                'NAME'     => $productData['name'],
+                'UNITS'    => $productData['units'],
+                'PRICE'    => $productData['price_display'] ? number_format__($productData['price']) : '—',
+                'QUANTITY' => $productData['quantity'],
+                'COST'     => $productData['price_display'] ? number_format__($cost) : '—',
+            ]);
 
-                        remap($itemData, $tileData, 'price_display, sell_by_alt_units');
-                    }
+            if ($productData['price_display']) {
+                if ($discount) {
+                    $v->assign('item/price_without_discount', [
+                        'VALUE'    => number_format__($productData['price_without_discount']),
+                        'DISCOUNT' => $discount
+                    ]);
                 }
+            }
 
-                if ($itemData['price_display']) {
-                    $totalCost += $cost;
-                } else {
-                    $hasOnceWithHiddenPrice = true;
-                }
-
-                $v->assign('item', [
-                    'NAME'     => $item['name'],
-                    'PRICE'    => $itemData['price_display'] ? number_format__($item['price']) : '—',
-                    'QUANTITY' => trim_zeros($item['quantity']),
-                    'COST'     => $itemData['price_display'] ? number_format__($cost) : '—'
-                ]);
-
+            if ($product) {
                 $imageSmall = $this->c('\std\images~:first', [
                     'model'       => $product,
                     'query'       => '100 100 fit',

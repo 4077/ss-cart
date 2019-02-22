@@ -1,6 +1,6 @@
 <div class="{__NODE_ID__}" instance="{__INSTANCE__}">
 
-    <!-- if item -->
+    <!-- if product -->
     <table class="items">
 
         <tr class="header">
@@ -20,11 +20,11 @@
             </td>
         </tr>
 
-        <!-- item -->
-        <tr class="item" n="{NUMBER}" product_id="{PRODUCT_ID}" hover_listen="cart_table_item_{NUMBER}" key="{KEY}">
+        <!-- product -->
+        <tr class="item" n="{NUMBER}" product_id="{ID}" hover_listen="cart_table_item_{NUMBER}" key="{KEY}">
 
             <td class="image" hover="hover" hover_group="cart_table_item_{NUMBER}" width="1">
-                <!-- item/image -->
+                <!-- product/image -->
                 <div class="image">
                     {CONTENT}
                 </div>
@@ -33,12 +33,24 @@
 
             <td class="description" hover="hover" hover_group="cart_table_item_{NUMBER}">
                 <div class="name">{NAME}</div>
-                <!-- item/props -->
+                <!-- product/props -->
                 <div class="props">{CONTENT}</div>
                 <!-- / -->
             </td>
 
             <td class="price" hover_group="cart_table_item_{NUMBER}">
+                <!-- product/price_without_discount -->
+                <div class="price_without_discount">
+                    <div class="value">
+                        {VALUE}
+                    </div>
+                    <div class="tag">
+                        <div class="icon fa fa-tag"></div>
+                        <div class="overlay"></div>
+                        <div class="label">-{DISCOUNT}%</div>
+                    </div>
+                </div>
+                <!-- / -->
                 {PRICE}
             </td>
 
@@ -81,12 +93,12 @@
     </table>
 
     <div class="feed">
-        <!-- item -->
-        <div class="item" product_id="{PRODUCT_ID}" hover_listen="cart_table_item_{NUMBER}">
+        <!-- product -->
+        <div class="item" product_id="{ID}" hover_listen="cart_table_item_{NUMBER}">
 
             <div class="r1">
                 <div class="image" hover="hover" hover_group="cart_table_item_{NUMBER}">
-                    <!-- item/image -->
+                    <!-- product/image -->
                     {CONTENT}
                     <!-- / -->
                 </div>
@@ -94,7 +106,7 @@
                 <div class="description_and_delete_button">
                     <div class="description" hover="hover" hover_group="cart_table_item_{NUMBER}">
                         <div class="name">{NAME}</div>
-                        <!-- item/props -->
+                        <!-- product/props -->
                         <div class="props">{CONTENT}</div>
                         <!-- / -->
                     </div>
@@ -105,7 +117,18 @@
 
             <div class="r2">
                 <!-- if price_display -->
-                <div class="price" hover_group="cart_table_item_{NUMBER}">
+                <div class="price" hover_group="cart_table_item_{NUMBER}"><!-- product/price_without_discount -->
+                    <div class="price_without_discount">
+                        <div class="value">
+                            {VALUE} руб./{product/UNITS}
+                        </div>
+                        <div class="tag">
+                            <div class="icon fa fa-tag"></div>
+                            <div class="overlay"></div>
+                            <div class="label">-{DISCOUNT}%</div>
+                        </div>
+                    </div>
+                    <!-- / -->
                     {PRICE} руб./{UNITS}
                 </div>
                 <!-- / -->

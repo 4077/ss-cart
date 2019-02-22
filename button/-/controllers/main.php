@@ -18,12 +18,12 @@ class Main extends \Controller
 
         $cart = cart($this->_instance());
 
-        $items = $cart->getItems();
+        $products = $cart->getProducts();
 
-        $itemsCount = count($items);
+        $productsCount = count($products);
 
-        if ($itemsCount) {
-            $v->assign('ITEMS_COUNT', $itemsCount);
+        if ($productsCount) {
+            $v->assign('PRODUCTS_COUNT', $productsCount);
         } else {
             $v->assign('HIDDEN_CLASS', 'hidden');
         }

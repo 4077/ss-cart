@@ -21,12 +21,12 @@ var __nodeNs__ = "ss_cart_button";
             var o = w.options;
             var $w = w.element;
 
-            var $itemsCount = $(".items_count", $w);
+            var $productsCount = $(".products_count", $w);
 
             var cartUpdateHandler = function (data) {
                 if (o.instance === data.instance) {
-                    if (data.itemsCount > 0) {
-                        $itemsCount.html(data.itemsCount);
+                    if (data.productsCount > 0) {
+                        $productsCount.html(data.productsCount);
 
                         $w.fadeIn(200);
                     } else {
@@ -35,8 +35,8 @@ var __nodeNs__ = "ss_cart_button";
                 }
             };
 
-            w.e('ss/cart/delete_item' , cartUpdateHandler);
-            w.e('ss/cart/add_item', cartUpdateHandler);
+            w.e('ss/cart/delete_product' , cartUpdateHandler);
+            w.e('ss/cart/add_product', cartUpdateHandler);
         },
 
         bind: function () {

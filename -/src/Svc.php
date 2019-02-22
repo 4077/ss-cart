@@ -30,18 +30,18 @@ class Svc extends \ewma\Service\Service
 
     protected $services = [
         'stage',
-        'mailer'
+        //        'mailer'
     ];
 
     /**
      * @var \ss\cart\Svc\Stage
      */
     public $stage = \ss\cart\Svc\Stage::class;
-
-    /**
-     * @var \ss\cart\Svc\Mailer
-     */
-    public $mailer = \ss\cart\Svc\Mailer::class;
+//
+//    /**
+//     * @var \ss\cart\Svc\Mailer
+//     */
+//    public $mailer = \ss\cart\Svc\Mailer::class;
 
     //
     //
@@ -60,12 +60,14 @@ class Svc extends \ewma\Service\Service
 
         $this->s = &$this->rootController->s('|' . $this->instance, [
             'stage'       => [],
-            'items'       => [],
+            'products'    => [],
             'client_info' => [],
             'cache'       => [
                 'total_cost' => 0
             ]
         ]);
+
+        appc()->se('ss/cats/ui/select_warehouses_group')->rebind('\ss\cart app:recalculate|' . $this->instance);
     }
 
     public function settings($path = false)
@@ -84,21 +86,21 @@ class Svc extends \ewma\Service\Service
         return $s;
     }
 
-    private function &sItem($key)
+    private function &sProduct(\ss\models\Product $product)
     {
-        $s = &ap($this->s, 'items/' . $key);
+        $s = &ap($this->s, 'products/' . $product->id);
 
         return $s;
     }
 
-    public function getItems()
+    public function getProducts()
     {
-        return $this->s['items'];
+        return $this->s['products'];
     }
 
-    public function contain($itemKey)
+    public function contain(\ss\models\Product $product)
     {
-        return null !== $this->sItem($itemKey);
+        return null !== $this->sProduct($product);
     }
 
     public function update($path, $value)
@@ -106,20 +108,43 @@ class Svc extends \ewma\Service\Service
         ap($this->s, $path, $value);
     }
 
-    public function incQuantity($itemKey)
+    public function recalculate()
     {
-        $s = &$this->sItem($itemKey);
+        $products = $this->getProducts();
+
+        foreach ($products as $productId => $productData) {
+            if ($product = \ss\models\Product::find($productId)) {
+                if ($pivotPack = $productData['pivot'] ?? false) {
+                    if ($pivot = unpack_model($pivotPack)) {
+                        $tile = \ss\components\products\tile($product, $pivot);
+
+                        $sProduct = &$this->sProduct($product);
+
+                        $sProduct['name'] = $tile->name;
+                        $sProduct['price'] = $tile->price;
+                        $sProduct['price_without_discount'] = $tile->priceWithoutDiscount;
+                        $sProduct['discount'] = $tile->discount;
+                        $sProduct['units'] = $tile->units;
+                    }
+                }
+            }
+        }
+    }
+
+    public function incQuantity(\ss\models\Product $product)
+    {
+        $s = &$this->sProduct($product);
 
         $s['quantity'] += 1;
 
-        pusher()->trigger('ss/cart/update_item', [
-            'itemKey' => $itemKey
+        pusher()->trigger('ss/cart/update_product', [
+            'productId' => $product->id
         ]);
     }
 
-    public function decQuantity($itemKey)
+    public function decQuantity(\ss\models\Product $product)
     {
-        $s = &$this->sItem($itemKey);
+        $s = &$this->sProduct($product);
 
         $s['quantity'] -= 1;
 
@@ -127,14 +152,14 @@ class Svc extends \ewma\Service\Service
             $s['quantity'] = 1;
         }
 
-        pusher()->trigger('ss/cart/update_item', [
-            'itemKey' => $itemKey
+        pusher()->trigger('ss/cart/update_product', [
+            'productId' => $product->id
         ]);
     }
 
-    public function setQuantity($itemKey, $value)
+    public function setQuantity(\ss\models\Product $product, $value)
     {
-        $s = &$this->sItem($itemKey);
+        $s = &$this->sProduct($product);
 
         $value = \ewma\Data\Formats\Numeric::parseDecimal($value);
 
@@ -144,86 +169,90 @@ class Svc extends \ewma\Service\Service
 
         $s['quantity'] = $value;
 
-        pusher()->trigger('ss/cart/update_item', [
-            'itemKey' => $itemKey
+        pusher()->trigger('ss/cart/update_product', [
+            'productId' => $product->id
         ]);
     }
 
-    public function getQuantity($itemKey)
+    public function getQuantity(\ss\models\Product $product)
     {
-        return $this->s['items'][$itemKey]['quantity'] ?? 0;
+        return $this->s['products'][$product->id]['quantity'] ?? 0;
     }
 
-    public function add($itemKey, $itemData)
+    public function add(\ss\models\Product $product, $productData)
     {
-        $sItem = &$this->sItem($itemKey);
+        $sProduct = &$this->sProduct($product);
 
-        $quantity = $this->stage->getQuantity($itemKey);
+        $quantity = $this->stage->getQuantity($product);
 
-        if (null !== $sItem) {
-            $sItem['quantity'] += $quantity;
+        if (null !== $sProduct) {
+            $sProduct['quantity'] += $quantity;
         } else {
-            ra($itemData, ['quantity' => $quantity]);
+            ra($productData, ['quantity' => $quantity]);
 
-            $sItem = $itemData;
+            $sProduct = $productData;
         }
 
-        pusher()->trigger('ss/cart/add_item', [
-            'instance'   => $this->instance,
-            'itemsCount' => count($this->s['items']),
-            'itemKey'    => $itemKey
+        $this->stage->setQuantity($product, 1);
+
+        pusher()->trigger('ss/cart/add_product', [
+            'instance'      => $this->instance,
+            'productsCount' => count($this->s['products']),
+            'productId'     => $product->id
         ]);
 
         sstm()->events->trigger('cats/ui/addProductToCart', [
-            'item_key' => $itemKey,
-            'cart'     => [
+            'product_id' => $product->id,
+            'cart'       => [
                 'instance' => $this->instance,
                 'data'     => $this->s
             ]
         ]);
     }
 
-    public function delete($itemKey)
+    public function delete(\ss\models\Product $product)
     {
-        if (isset($this->s['items'][$itemKey])) {
+        if (isset($this->s['products'][$product->id])) {
             # 1
+
+            // todo проверить что там
             sstm()->events->trigger('cats/ui/deleteProductFromCart', [
-                'item_key' => $itemKey,
-                'cart'     => [
+                'product_id' => $product->id,
+                'cart'       => [
                     'instance' => $this->instance,
                     'data'     => $this->s
                 ]
             ]);
 
             # 2
-            unset($this->s['items'][$itemKey]);
+            unset($this->s['products'][$product->id]);
 
-            pusher()->trigger('ss/cart/delete_item', [
-                'instance'   => $this->instance,
-                'itemsCount' => count($this->s['items']),
-                'itemKey'    => $itemKey
+            pusher()->trigger('ss/cart/delete_product', [
+                'instance'      => $this->instance,
+                'productsCount' => count($this->s['products']),
+                'productId'     => $product->id,
             ]);
         }
     }
 
     public function reset()
     {
-        $cartItemsKeys = array_keys($this->s['items']);
-        $stageItemsKeys = array_keys(ap($this->s, 'stage'));
+        $cartProductsIds = array_keys($this->s['products']);
+        $stageProductsIds = array_keys(ap($this->s, 'stage'));
 
-        merge($itemsKeys, $cartItemsKeys);
-        merge($itemsKeys, $stageItemsKeys);
+        merge($productsIds, $cartProductsIds);
+        merge($productsIds, $stageProductsIds);
 
         ra($this->s, [
-            'items' => [],
-            'stage' => []
+            'products' => [],
+            'stage'    => []
         ]);
 
-        foreach ($itemsKeys as $itemKey) {
-            pusher()->trigger('ss/cart/delete_item', [
-                'instance'   => $this->instance,
-                'itemsCount' => 0,
-                'itemKey'    => $itemKey
+        foreach ($productsIds as $productId) {
+            pusher()->trigger('ss/cart/delete_product', [
+                'instance'      => $this->instance,
+                'productsCount' => 0,
+                'productId'     => $productId
             ]);
         }
     }

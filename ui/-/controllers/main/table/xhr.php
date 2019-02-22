@@ -9,45 +9,50 @@ class Xhr extends \Controller
         $this->c('<:reload|');
     }
 
-    private function getCartInstance()
+    private function getCart()
     {
-        return $this->_instance();
+        if ($instance = $this->_instance()) {
+            return cart($instance);
+        }
     }
 
     public function delete()
     {
-        $itemKey = $this->data('item_key');
+        $product = $this->unxpackModel('product');
+        $cart = $this->getCart();
 
-        cart($this->getCartInstance())->delete($itemKey);
+        if ($product && $cart) {
+            $cart->delete($product);
+        }
     }
 
     public function decQuantity()
     {
-        $itemKey = $this->data('item_key');
-        $cartInstance = $this->getCartInstance();
+        $product = $this->unxpackModel('product');
+        $cart = $this->getCart();
 
-        if ($itemKey && null !== $cartInstance) {
-            cart($cartInstance)->decQuantity($itemKey);
+        if ($product && $cart) {
+            $cart->decQuantity($product);
         }
     }
 
     public function incQuantity()
     {
-        $itemKey = $this->data('item_key');
-        $cartInstance = $this->getCartInstance();
+        $product = $this->unxpackModel('product');
+        $cart = $this->getCart();
 
-        if ($itemKey && null !== $cartInstance) {
-            cart($cartInstance)->incQuantity($itemKey);
+        if ($product && $cart) {
+            $cart->incQuantity($product);
         }
     }
 
     public function setQuantity()
     {
-        $itemKey = $this->data('item_key');
-        $cartInstance = $this->getCartInstance();
+        $product = $this->unxpackModel('product');
+        $cart = $this->getCart();
 
-        if ($itemKey && null !== $cartInstance) {
-            cart($cartInstance)->setQuantity($itemKey, $this->data('value'));
+        if ($product && $cart) {
+            $cart->setQuantity($product, $this->data('value'));
         }
     }
 }

@@ -1,7 +1,7 @@
 // head {
-@import "../../../../../../../modules-vendor/fed/css/std/-/less/main.less";
+@import "../../../../../../modules-vendor/fed/css/std/-/less/main.less";
 
-@__nodeId__: ~"store_cart_cart__main_table";
+@__nodeId__: ~"ss_cart_ui__main_table";
 // }
 
 .@{__nodeId__} {
@@ -111,6 +111,52 @@
                 &.price {
                     color: #000000;
                     text-align: center;
+
+                    .price_without_discount {
+                        margin: 5px 0 3px;
+
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+
+                        .value {
+                            font-size: 12px;
+                            text-decoration: line-through;
+                            font-weight: bold;
+                            color: #cc0000;
+                            text-align: center;
+                            font-family: PTSansBold;
+                        }
+
+                        .tag {
+                            margin-left: 12px;
+                            position: relative;
+
+                            .icon {
+                                //margin-top: -50%;
+                                margin: -10px 0;
+                                font-size: 34px;
+                                color: #cc0000;
+                                transform: rotate(-45deg);
+                            }
+
+                            .overlay {
+                                position: absolute;
+                                top: 0;
+                                width: 10px;
+                                height: 10px;
+                                background-color: #cc0000;
+                            }
+
+                            .label {
+                                position: absolute;
+                                color: #ffffff;
+                                margin-top: -13px;
+                                margin-left: 0px;
+                                font-size: 11px;
+                            }
+                        }
+                    }
                 }
 
                 .quantity {
@@ -290,6 +336,52 @@
 
                 .price {
                     padding: 0 10px;
+
+                    .price_without_discount {
+                        margin: 5px 0 3px;
+
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+
+                        .value {
+                            font-size: 12px;
+                            text-decoration: line-through;
+                            font-weight: bold;
+                            color: #cc0000;
+                            text-align: center;
+                            font-family: PTSansBold;
+                        }
+
+                        .tag {
+                            margin-left: 12px;
+                            position: relative;
+
+                            .icon {
+                                //margin-top: -50%;
+                                margin: -10px 0;
+                                font-size: 34px;
+                                color: #cc0000;
+                                transform: rotate(-45deg);
+                            }
+
+                            .overlay {
+                                position: absolute;
+                                top: 0;
+                                width: 10px;
+                                height: 10px;
+                                background-color: #cc0000;
+                            }
+
+                            .label {
+                                position: absolute;
+                                color: #ffffff;
+                                margin-top: -13px;
+                                margin-left: 0px;
+                                font-size: 11px;
+                            }
+                        }
+                    }
                 }
 
                 .quantity {

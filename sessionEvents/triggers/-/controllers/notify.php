@@ -1,5 +1,7 @@
 <?php namespace ss\cart\sessionEvents\triggers\controllers;
 
+// todo rm tdui
+
 class Notify extends \Controller
 {
     public function cartPageOpen()

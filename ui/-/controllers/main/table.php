@@ -15,73 +15,48 @@ class Table extends \Controller
 
         $cart = cart($cartInstance);
 
-        $noContainer = $cart->settings('ui/cart/no_container');
+        $products = $cart->getProducts();
 
-        $items = $cart->getItems();
-
-        if (empty($noContainer)) { // костыль
-            /**
-             * @var $carouselSvc \ss\components\products\ui\controllers\Carousel
-             */
-            $carouselSvc = $this->c('\ss\components\products\ui carousel');
-
-            /**
-             * @var $cTileApp \ss\components\products\ui\controllers\tile\App
-             */
-            $cTileApp = $this->c('\ss\components\products\ui tile/app');
-        }
+        /**
+         * @var $carouselSvc \ss\components\products\ui\controllers\Carousel
+         */
+        $carouselSvc = $this->c('\ss\components\products\ui carousel');
 
         $hasOnceWithHiddenPrice = false;
 
         $totalCost = 0;
 
-        $number = 0;
-        foreach ($items as $itemKey => $item) {
-            $cost = $item['price'] * $item['quantity'];
+        foreach ($products as $productId => $productData) {
+            $product = \ss\models\Product::find($productId);
 
-            $requestData = [
-                'item_key' => $itemKey
-            ];
+            $discount = $productData['discount'];
+            $price = $productData['price'];
 
-            $model = unpack_model($item['model'] ?? null);
+            $cost = $price * $productData['quantity'];
 
-            $itemData = [
-                'price_display'     => true,
-                'sell_by_alt_units' => false
-            ];
-
-            if (empty($noContainer)) { // костыль
-                if ($model instanceof \ss\models\Product) {
-                    if ($container = $model->cat) {
-                        $pivot = ss()->cats->getFirstEnabledComponentPivot($container);
-
-                        $tileData = $cTileApp->renderTileData($model, $pivot);
-
-                        remap($itemData, $tileData, 'price_display, sell_by_alt_units');
-                    }
-                }
-            }
-
-            if ($itemData['price_display']) {
+            if ($productData['price_display']) {
                 $totalCost += $cost;
             } else {
                 $hasOnceWithHiddenPrice = true;
             }
 
-            $v->assign('item', [
-                'KEY'              => $itemKey,
-                'NUMBER'           => $number,
-                'NAME'             => $item['name'],
-                'QUANTIFY'         => $this->c('\std\ui\quantify~:view|' . $cartInstance . '/cart/' . $itemKey, [
+            $requestData = ['product' => xpack_model($product)];
+
+            $v->assign('product', [
+                'ID'               => $productId,
+                'NUMBER'           => $carouselSvc->n,
+                'NAME'             => $productData['name'],
+                'QUANTIFY'         => $this->c('\std\ui\quantify~:view|' . $cartInstance . '/cart/' . $productId, [
                     'inc_call'       => ['>xhr:incQuantity|', $requestData],
                     'dec_call'       => ['>xhr:decQuantity|', $requestData],
                     'update_call'    => ['>xhr:setQuantity|', $requestData],
                     'update_timeout' => 800,
-                    'quantity'       => (float)$item['quantity']
+                    'quantity'       => (float)$productData['quantity']
                 ]),
-                'PRICE'            => $itemData['price_display'] ? number_format__($item['price']) : '—',
-                'QUANTITY'         => $item['quantity'],
-                'COST'             => $itemData['price_display'] ? number_format__($cost) : '—',
+                'UNITS'            => $productData['units'],
+                'PRICE'            => $productData['price_display'] ? number_format__($productData['price']) : '—',
+                'QUANTITY'         => $productData['quantity'],
+                'COST'             => $productData['price_display'] ? number_format__($cost) : '—',
                 'DELETE_BUTTON_TD' => $this->c('\std\ui button:view:td', [
                     'path'  => '>xhr:delete|',
                     'data'  => $requestData,
@@ -99,52 +74,37 @@ class Table extends \Controller
                 ])
             ]);
 
-            if ($itemData['price_display']) {
+            if ($productData['price_display']) {
                 $v->assign('price_display');
+
+                if ($discount) {
+                    $v->assign('product/price_without_discount', [
+                        'VALUE'    => number_format__($productData['price_without_discount']),
+                        'DISCOUNT' => $discount
+                    ]);
+                }
             }
 
-            if ($model) {
+            if ($product) {
                 $image = $this->c('\std\images~:first', [
-                    'model'       => $model,
+                    'model'       => $product,
                     'query'       => '100 100',
                     'cache_field' => 'images_cache'
                 ]);
 
                 if ($image) {
-                    $v->assign('item/image', [
+                    $v->assign('product/image', [
                         'CONTENT' => $image->view
                     ]);
                 }
 
-                if ($model instanceof \ss\models\Product) {
-                    if ($propsString = $this->getPropsString($model)) {
-                        $v->assign('item/props', [
-                            'CONTENT' => $propsString
-                        ]);
-                    }
+                if ($pivotPack = $productData['pivot'] ?? false) {
+                    if ($pivot = unpack_model($pivotPack)) {
+                        $tile = \ss\components\products\tile($product, $pivot);
 
-                    if (empty($noContainer)) { // костыль
-                        if ($pivot = ss()->cats->getFirstEnabledComponentPivot($model->cat)) {
-                            $tileData = $cTileApp->renderTileData($model, $pivot, true);
-
-                            // отключил в корзине это всё принудительно, так как изменение колва или добавление в корзину перезагружает таблицу и карусель пропадает
-                            ra($tileData, [
-                                'quantify'                        => false,
-                                'cartbutton/display'              => false,
-                                'stock_info/in_stock/display'     => false,
-                                'stock_info/not_in_stock/display' => false
-                            ]);
-
-                            $carouselSvc->addProduct($model->id, $this->c('\ss\components\products\ui product:view', $tileData));
-                        }
+                        $carouselSvc->addTile($tile);
                     }
                 }
-
-                $v->append('item', [
-                    'UNITS' => $itemData['sell_by_alt_units'] ? $model->alt_units : $model->units
-                ]);
-
-                $number++;
             }
         }
 
@@ -171,21 +131,15 @@ class Table extends \Controller
         }
 
         $v->assign('TOTAL_COST', number_format__($totalCost));
-
-        if (empty($noContainer)) { // костыль
-            $v->assign('CAROUSEL', $carouselSvc->render([
-                                                            'back_route' => $cart->settings('ui/cart/route')
-                                                        ]));
-        }
+        $v->assign('CAROUSEL', $carouselSvc->render(['back_route' => $cart->settings('ui/cart/route')]));
 
         $this->css(':\css\std~');
 
         $widgetData = [
-            'noContainer' => $noContainer, // костыль
-            '.w'          => [
+            '.w' => [
                 'carousel' => $this->_w('\ss\components\products\ui carousel:')
             ],
-            '.r'          => [
+            '.r' => [
                 'reload' => $this->_p('>xhr:reload|')
             ]
         ];

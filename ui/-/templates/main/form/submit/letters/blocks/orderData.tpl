@@ -20,8 +20,15 @@
             <div style="font-weight: bold">{NAME}</div>
             <div style="color: #8E703E">{DESCRIPTION}</div>
         </td>
-        <td style="padding: 5px 15px; background-color: #F0F0F0; color: #606060; font-size: 13px" align="center">{PRICE}</td>
-        <td style="padding: 5px 15px; background-color: #F0F0F0; color: #606060; font-size: 13px" align="center">{QUANTITY}</td>
+        <td style="padding: 5px 15px; background-color: #F0F0F0; color: #606060; font-size: 13px" align="center">
+            <!-- item/price_without_discount -->
+            <div style="text-decoration: line-through; color: #a0a0a0;">{VALUE}</div>
+            <b>скидка:&nbsp;{DISCOUNT}%</b>
+            <br>
+            <!-- / -->
+            {PRICE}
+        </td>
+        <td style="padding: 5px 15px; background-color: #F0F0F0; color: #606060; font-size: 13px" align="center">{QUANTITY} {UNITS}</td>
         <td style="padding: 5px 15px; background-color: #F0F0F0; color: #ff0000; font-size: 13px" align="center">{COST}</td>
     </tr>
     <!-- / -->

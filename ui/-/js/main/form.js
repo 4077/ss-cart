@@ -1,6 +1,6 @@
 // head {
-var __nodeId__ = "store_cart_cart__main_form";
-var __nodeNs__ = "store_cart_cart";
+var __nodeId__ = "ss_cart_ui__main_form";
+var __nodeNs__ = "ss_cart_ui";
 // }
 
 (function (__nodeNs__, __nodeId__) {

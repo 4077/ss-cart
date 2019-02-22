@@ -1,11 +1,11 @@
 <div class="{__NODE_ID__}">
 
     <table>
-        <!-- item -->
+        <!-- product -->
         <tr class="{HIGHLIGHT_CLASS}">
             <td class="name">{NAME}</td>
             <td class="price">{PRICE}</td>
-            <td class="quantity">{QUANTITY}</td>
+            <td class="quantity">{QUANTITY} {UNITS}</td>
             <td class="cost">{COST}</td>
         </tr>
         <!-- / -->

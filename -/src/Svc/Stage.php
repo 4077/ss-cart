@@ -24,9 +24,9 @@ class Stage extends \ewma\Service\Service
         $this->s = &cart($this->instance)->s('stage');
     }
 
-    private function &sItem($key)
+    private function &sProduct(\ss\models\Product $product)
     {
-        $s = &ap($this->s, $key);
+        $s = &ap($this->s, $product->id);
 
         if (null === $s) {
             $s['quantity'] = 1;
@@ -35,45 +35,45 @@ class Stage extends \ewma\Service\Service
         return $s;
     }
 
-    public function getItems()
+    public function getProducts()
     {
-        return $this->s['items'];
+        return $this->s['products'];
     }
 
-    public function getQuantity($itemKey)
+    public function getQuantity(\ss\models\Product $product)
     {
-        return $this->s[$itemKey]['quantity'] ?? 1;
+        return $this->s[$product->id]['quantity'] ?? 1;
     }
 
-    public function incQuantity($itemKey)
+//    public function incQuantity(\ss\models\Product $product)
+//    {
+//        $s = &$this->sProduct($product);
+//
+//        $s['quantity'] += 1;
+//
+//        pusher()->trigger('ss/cart/stage/update_product', [
+//            'productId' => $product->id
+//        ]);
+//    }
+//
+//    public function decQuantity(\ss\models\Product $product)
+//    {
+//        $s = &$this->sProduct($product);
+//
+//        $s['quantity'] -= 1;
+//
+//        if ($s['quantity'] < 1) {
+//            $s['quantity'] = 1;
+//        }
+//
+//        pusher()->trigger('ss/cart/stage/update_product', [
+//            'productId' => $product->id
+//        ]);
+//    }
+
+    public function setQuantity(\ss\models\Product $product, $value)
     {
-        $s = &$this->sItem($itemKey);
-
-        $s['quantity'] += 1;
-
-        pusher()->trigger('ss/cart/stage/update_item', [
-            'itemKey' => $itemKey
-        ]);
-    }
-
-    public function decQuantity($itemKey)
-    {
-        $s = &$this->sItem($itemKey);
-
-        $s['quantity'] -= 1;
-
-        if ($s['quantity'] < 1) {
-            $s['quantity'] = 1;
-        }
-
-        pusher()->trigger('ss/cart/stage/update_item', [
-            'itemKey' => $itemKey
-        ]);
-    }
-
-    public function setQuantity($itemKey, $value)
-    {
-        $s = &$this->sItem($itemKey);
+        $s = &$this->sProduct($product);
 
         $value = \ewma\Data\Formats\Numeric::parseDecimal($value);
 
@@ -83,8 +83,8 @@ class Stage extends \ewma\Service\Service
 
         $s['quantity'] = $value;
 
-        pusher()->trigger('ss/cart/stage/update_item', [
-            'itemKey' => $itemKey
+        pusher()->triggerOthers('ss/cart/stage/update_product', [
+            'productId' => $product->id
         ]);
     }
 }

@@ -1,9 +1,9 @@
 <table style="border-collapse: separate; border-spacing: 1px; background-color: #C5C5C5;">
-    <!-- item -->
+    <!-- product -->
     <tr>
         <td style="padding: 3px 5px; background-color: #FFFFFF;">{NAME}</td>
         <td style="padding: 3px 5px; background-color: #FFFFFF; text-align: right;">{PRICE}</td>
-        <td style="padding: 3px 5px; background-color: #FFFFFF; text-align: center;">{QUANTITY}</td>
+        <td style="padding: 3px 5px; background-color: #FFFFFF; text-align: center;">{QUANTITY} {UNITS}</td>
         <td style="padding: 3px 5px; background-color: #FFFFFF; text-align: right;">{COST}</td>
     </tr>
     <!-- / -->

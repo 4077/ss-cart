@@ -11,20 +11,27 @@ class OrderDataLetter extends \Controller
 
         $totalCost = 0;
 
-        if ($items = ap($cartData, 'items')) {
-            foreach ($items as $key => $item) {
-                $cost = $item['price'] * $item['quantity'];
+        if ($products = ap($cartData, 'products')) {
+            foreach ($products as $productId => $productData) {
+                $cost = $productData['price'] * $productData['quantity'];
 
-                if ($product = unpack_model($item['model'] ?? null)) {
-                    $totalCost += $cost;
+                $totalCost += $cost;
 
-                    $v->assign('item', [
-                        'NAME'     => $item['name'],
-                        'PRICE'    => number_format__($item['price']),
-                        'QUANTITY' => trim_zeros($item['quantity']),
-                        'COST'     => number_format__($cost)
-                    ]);
+                $priceString = '';
+
+                if ($productData['discount']) {
+                    $priceString .= number_format__($productData['price_without_discount']) . ' -' . $productData['discount'] . '% ';
                 }
+
+                $priceString .= number_format__($productData['price']);
+
+                $v->assign('product', [
+                    'NAME'     => $productData['name'],
+                    'PRICE'    => $priceString,
+                    'QUANTITY' => trim_zeros($productData['quantity']),
+                    'UNITS'    => $productData['units'],
+                    'COST'     => number_format__($cost)
+                ]);
             }
 
             $v->assign([
